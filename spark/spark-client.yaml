@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spark-client
+  namespace: default
+spec:
+  serviceAccountName: spark
+  containers:
+  - name: spark-client
+    image: spark:3.5.2
+    command: ["/bin/bash", "-c"]
+    args:
+    - |
+      # 1. 스칼라 쉘 (기존 myspark)
+      echo '#!/bin/bash
+      /opt/spark/bin/spark-shell \
+      --master k8s://https://kubernetes.default.svc \
+      --conf spark.kubernetes.container.image=spark:3.5.2 \
+      --conf spark.executor.instances=2 \
+      --conf spark.driver.host=$(hostname -i)' > /tmp/myspark;
+      chmod +x /tmp/myspark;
+
+      # 2. 하이브 SQL 클라이언트 (새로 추가한 myhive)
+      echo '#!/bin/bash
+      /opt/spark/bin/spark-sql \
+      --master k8s://https://kubernetes.default.svc \
+      --conf spark.kubernetes.container.image=spark:3.5.2 \
+      --conf spark.executor.instances=2 \
+      --conf spark.driver.host=$(hostname -i) \
+      --conf spark.ui.showConsoleProgress=false \
+      --conf spark.hadoop.hive.cli.print.header=true' > /tmp/myhive;
+      chmod +x /tmp/myhive;
+
+      # 3. 팟 유지
+      while true; do sleep 30; done;
